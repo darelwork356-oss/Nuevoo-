@@ -2304,7 +2304,7 @@ setInterval(checkScheduledChapters, 60000);
       
       <!-- Formulario de Correo -->
       <div id="email-form-content">
-        <form id="authForm" class="space-y-4">
+        <form id="emailStepForm" class="space-y-4" onsubmit="event.preventDefault(); showPasswordStep();">
           <input
             id="emailInput"
             type="email"
@@ -2312,26 +2312,15 @@ setInterval(checkScheduledChapters, 60000);
             class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
             required
           >
-          <input
-            id="passwordInput"
-            type="password"
-            placeholder="Contraseña"
-            class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
-            required
-          >
           <button
-            id="submitButton"
             type="submit"
             class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
           >
-            Iniciar sesión
+            Continuar
           </button>
         </form>
         
-        <div class="mt-6 text-center space-y-3">
-          <a href="#" onclick="resetPassword()" class="block text-sm text-gray-600 hover:text-[#00A2FF] transition">
-            ¿Olvidaste tu contraseña?
-          </a>
+        <div class="mt-6 text-center">
           <button id="toggleAuth" class="text-sm font-medium text-[#00A2FF] hover:underline">
             ¿No tienes cuenta? Regístrate
           </button>
@@ -2339,6 +2328,89 @@ setInterval(checkScheduledChapters, 60000);
       </div>
       
       <div id="authError" class="mt-4 text-red-500 text-center text-sm hidden"></div>
+    </div>
+  </div>
+  
+  <!-- Pantalla de contraseña -->
+  <div id="password-form" class="w-full h-screen flex flex-col bg-white hidden">
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <button onclick="backToEmail()" class="p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h2 class="text-lg font-semibold text-gray-900">Introduce tu contraseña</h2>
+        <div class="w-10"></div>
+      </div>
+    </div>
+    
+    <div class="flex-1 px-6 pt-8">
+      <p id="user-email-display" class="text-sm text-gray-600 mb-6"></p>
+      
+      <form id="authForm" class="space-y-4" onsubmit="event.preventDefault(); loginUser();">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="Contraseña"
+          class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
+          required
+        >
+        <button
+          id="submitButton"
+          type="submit"
+          class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
+        >
+          Iniciar sesión
+        </button>
+      </form>
+      
+      <div class="mt-6 text-center">
+        <button onclick="showForgotPassword()" class="text-sm text-gray-600 hover:text-[#00A2FF] transition">
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+      
+      <div id="authError" class="mt-4 text-red-500 text-center text-sm hidden"></div>
+    </div>
+  </div>
+  
+  <!-- Pantalla de recuperar contraseña -->
+  <div id="forgot-password-form" class="w-full h-screen flex flex-col bg-white hidden">
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <button onclick="backToPassword()" class="p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <h2 class="text-lg font-semibold text-gray-900">Recuperar contraseña</h2>
+        <div class="w-10"></div>
+      </div>
+    </div>
+    
+    <div class="flex-1 px-6 pt-8">
+      <p class="text-sm text-gray-600 mb-6">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
+      
+      <form id="forgotPasswordForm" class="space-y-4" onsubmit="event.preventDefault(); sendPasswordReset();">
+        <input
+          id="resetEmailInput"
+          type="email"
+          placeholder="Correo electrónico"
+          class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
+          required
+        >
+        <button
+          id="resetButton"
+          type="submit"
+          class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
+        >
+          Enviar enlace
+        </button>
+      </form>
+      
+      <div id="resetMessage" class="mt-4 text-center text-sm hidden"></div>
+      <div id="resetTimer" class="mt-2 text-center text-xs text-gray-500 hidden"></div>
     </div>
   </div>
 </body>
@@ -10844,6 +10916,107 @@ async function likeNote(noteId) {
   function hideEmailForm() {
     document.getElementById('email-form').classList.add('hidden');
     document.getElementById('auth-form').style.display = 'flex';
+  }
+  
+  function showPasswordStep() {
+    const email = document.getElementById('emailInput').value;
+    document.getElementById('user-email-display').textContent = email;
+    document.getElementById('email-form').classList.add('hidden');
+    document.getElementById('password-form').classList.remove('hidden');
+  }
+  
+  function backToEmail() {
+    document.getElementById('password-form').classList.add('hidden');
+    document.getElementById('email-form').classList.remove('hidden');
+    document.getElementById('passwordInput').value = '';
+  }
+  
+  function showForgotPassword() {
+    const email = document.getElementById('emailInput').value;
+    document.getElementById('resetEmailInput').value = email;
+    document.getElementById('password-form').classList.add('hidden');
+    document.getElementById('forgot-password-form').classList.remove('hidden');
+  }
+  
+  function backToPassword() {
+    document.getElementById('forgot-password-form').classList.add('hidden');
+    document.getElementById('password-form').classList.remove('hidden');
+  }
+  
+  let lastResetTime = 0;
+  function sendPasswordReset() {
+    const now = Date.now();
+    const timeSinceLastReset = now - lastResetTime;
+    const fifteenMinutes = 15 * 60 * 1000;
+    
+    if (timeSinceLastReset < fifteenMinutes) {
+      const remainingTime = Math.ceil((fifteenMinutes - timeSinceLastReset) / 60000);
+      document.getElementById('resetMessage').textContent = `Debes esperar ${remainingTime} minutos para enviar otro correo`;
+      document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-red-500';
+      document.getElementById('resetMessage').classList.remove('hidden');
+      return;
+    }
+    
+    const email = document.getElementById('resetEmailInput').value;
+    const resetButton = document.getElementById('resetButton');
+    resetButton.disabled = true;
+    resetButton.textContent = 'Enviando...';
+    
+    firebase.auth().sendPasswordResetEmail(email)
+      .then(() => {
+        lastResetTime = now;
+        document.getElementById('resetMessage').textContent = 'Correo enviado. Revisa tu bandeja de entrada.';
+        document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-green-600';
+        document.getElementById('resetMessage').classList.remove('hidden');
+        
+        let countdown = 900;
+        const timerElement = document.getElementById('resetTimer');
+        timerElement.classList.remove('hidden');
+        
+        const interval = setInterval(() => {
+          countdown--;
+          const minutes = Math.floor(countdown / 60);
+          const seconds = countdown % 60;
+          timerElement.textContent = `Podrás enviar otro correo en ${minutes}:${seconds.toString().padStart(2, '0')}`;
+          
+          if (countdown <= 0) {
+            clearInterval(interval);
+            timerElement.classList.add('hidden');
+          }
+        }, 1000);
+        
+        resetButton.disabled = false;
+        resetButton.textContent = 'Enviar enlace';
+      })
+      .catch(error => {
+        document.getElementById('resetMessage').textContent = 'Error: ' + error.message;
+        document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-red-500';
+        document.getElementById('resetMessage').classList.remove('hidden');
+        resetButton.disabled = false;
+        resetButton.textContent = 'Enviar enlace';
+      });
+  }
+  
+  function loginUser() {
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+    const submitButton = document.getElementById('submitButton');
+    const authError = document.querySelector('#password-form #authError');
+    
+    submitButton.disabled = true;
+    submitButton.textContent = 'Iniciando...';
+    authError.classList.add('hidden');
+    
+    firebase.auth().signInWithEmailAndPassword(email, password)
+      .then(() => {
+        // Login exitoso
+      })
+      .catch(error => {
+        authError.textContent = 'Correo o contraseña incorrectos';
+        authError.classList.remove('hidden');
+        submitButton.disabled = false;
+        submitButton.textContent = 'Iniciar sesión';
+      });
   }
   
   function switchLoginTab(tab) {
