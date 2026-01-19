@@ -11475,9 +11475,11 @@ document.getElementById('category-filter').addEventListener('change', performRea
     const user = firebase.auth().currentUser;
     if (!user) return;
     
-    // Ocultar la barra de navegación superior cuando se abre la edición de perfil
     const topNav = document.getElementById('top-navbar');
     if (topNav) topNav.style.display = 'none';
+    
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
     
     firebase.database().ref('users/' + user.uid).once('value').then(snapshot => {
       const data = snapshot.val() || {};
@@ -11588,8 +11590,8 @@ document.getElementById('category-filter').addEventListener('change', performRea
   function closeProfileEdit() {
     document.getElementById('profile-edit-modal').style.display = "none";
     
-    // No necesitamos mostrar el navbar aquí porque el modal de edición se abre sobre el perfil
-    // que ya tiene el navbar oculto
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'block';
   }
 
   function saveProfileEdits() {
