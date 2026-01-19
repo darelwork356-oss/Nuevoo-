@@ -1095,6 +1095,26 @@ setInterval(checkScheduledChapters, 60000);
   </div>
 </div>
 
+<!-- MODAL DE MIS HISTORIAS -->
+<div id="my-stories-modal" class="fixed inset-0 overflow-y-auto z-50 hidden bg-white" style="z-index: 9999;">
+  <div class="h-full flex flex-col">
+    <div class="sticky top-0 bg-white border-b border-gray-200 p-3 z-10">
+      <div class="flex items-center justify-between">
+        <button onclick="closeMyStoriesModal()" class="p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h2 class="text-base font-semibold">Mis Historias</h2>
+        <div class="w-10"></div>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4">
+      <div id="my-stories-list" class="grid grid-cols-2 gap-3"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL DE VERIFICACIÓN DE IDENTIDAD - PASO A PASO -->
 <div id="verification-modal" class="fixed inset-0 z-50 hidden bg-white">
   <div class="h-full flex flex-col">
@@ -5331,10 +5351,10 @@ function clearSearchInput() {
           
           <div class="flex-1">
             <div class="flex justify-around mb-3">
-              <div class="text-center">
+              <button onclick="openMyStoriesModal()" class="text-center">
                 <div id="profile-stories-count" class="font-semibold">0</div>
                 <div class="text-xs text-gray-500">Historias</div>
-              </div>
+              </button>
               <button onclick="openMyFollowersModal()" class="text-center">
                 <div id="profile-followers" class="font-semibold">0</div>
                 <div class="text-xs text-gray-500">Seguidores</div>
@@ -12225,6 +12245,65 @@ document.getElementById('category-filter').addEventListener('change', performRea
     
     currentViewedAuthorId = currentUser.uid;
     openFollowingModal();
+  }
+
+  function openMyStoriesModal() {
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+      alert("Debes iniciar sesión.");
+      return;
+    }
+    
+    document.getElementById('my-stories-modal').classList.remove('hidden');
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    
+    loadMyStoriesInModal(currentUser.uid);
+  }
+
+  function closeMyStoriesModal() {
+    document.getElementById('my-stories-modal').classList.add('hidden');
+    const bottomNav = document.getElementById('bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'block';
+  }
+
+  function loadMyStoriesInModal(userId) {
+    const storiesList = document.getElementById('my-stories-list');
+    storiesList.innerHTML = '<div class="col-span-2 text-center py-8 text-gray-500">Cargando...</div>';
+    
+    firebase.database().ref('stories').orderByChild('userId').equalTo(userId).once('value').then(snapshot => {
+      storiesList.innerHTML = '';
+      
+      if (!snapshot.exists()) {
+        storiesList.innerHTML = '<div class="col-span-2 text-center py-8 text-gray-500">No tienes historias aún</div>';
+        return;
+      }
+      
+      snapshot.forEach(childSnapshot => {
+        const story = childSnapshot.val();
+        const storyId = childSnapshot.key;
+        
+        const storyCard = document.createElement('div');
+        storyCard.className = 'cursor-pointer';
+        storyCard.onclick = () => {
+          closeMyStoriesModal();
+          openStoryDetail({id: storyId, ...story});
+        };
+        
+        storyCard.innerHTML = `
+          <div class="relative aspect-[3/4] rounded-lg overflow-hidden">
+            <img src="${story.coverImage || 'https://via.placeholder.com/300x400'}" class="w-full h-full object-cover" alt="${story.title}">
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+              <h3 class="text-white text-sm font-semibold line-clamp-2">${story.title}</h3>
+            </div>
+          </div>
+        `;
+        
+        storiesList.appendChild(storyCard);
+      });
+      
+      document.getElementById('profile-stories-count').textContent = snapshot.numChildren();
+    });
   }
   /*********************** CREACIÓN DE HISTORIAS **************************/
   document.getElementById('story-form').addEventListener('submit', function(e) {
