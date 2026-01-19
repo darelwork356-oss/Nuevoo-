@@ -2218,49 +2218,73 @@ setInterval(checkScheduledChapters, 60000);
   <!-- Google Translate (oculto) -->
   <div id="google_translate_element" style="display:none !important; visibility:hidden !important; position:absolute; left:-9999px;"></div>
   
-  <div id="auth-form" class="w-full h-screen flex flex-col justify-center p-6" style="display: none; opacity: 0;">
-    <!-- Centered title -->
-    <h1 id="auth-title" class="text-4xl font-bold text-center mb-8 text-[#00A2FF]">Atenis</h1>
-    <!-- Form takes full available width -->
-    <form id="authForm" class="w-full space-y-6 max-w-lg mx-auto">
-      <input
-        id="emailInput"
-        type="email"
-        placeholder="Email address"
-        class="w-full p-4 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#00A2FF] transition"
-        required
-      >
-      <input
-        id="passwordInput"
-        type="password"
-        placeholder="Password"
-        class="w-full p-4 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#00A2FF] transition"
-        required
-      >
-      <button
-        id="submitButton"
-        type="submit"
-        class="w-full bg-[#10a37f] text-white p-4 font-bold rounded-full transform hover:scale-105 transition"
-      >
-        Sign In
-      </button>
-    </form>
-    <!-- Links and toggle below the form -->
-    <div class="mt-6 text-center space-y-4 max-w-lg mx-auto">
-      <a
-        href="#"
-        onclick="resetPassword()"
-        class="block text-sm text-gray-600 hover:text-[#00A2FF] transition"
-      >
-        Forgot your password?
-      </a>
-      <button
-        id="toggleAuth"
-        class="block text-sm font-medium text-[#10a37f] hover:text-[#0d8b6f] transition"
-      >
-        Don't have an account? Sign up
-      </button>
-      <div id="authError" class="mt-4 text-red-500 hidden"></div>
+  <div id="auth-form" class="w-full h-screen flex items-center justify-center p-4" style="display: none; opacity: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="w-full max-w-md">
+      <!-- Logo y título -->
+      <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-white rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-2xl">
+          <span class="text-4xl font-bold bg-gradient-to-r from-[#667eea] to-[#764ba2] bg-clip-text text-transparent">A</span>
+        </div>
+        <h1 id="auth-title" class="text-3xl font-bold text-white mb-2">Atenis</h1>
+        <p class="text-white/80 text-sm">Tu universo de historias</p>
+      </div>
+      
+      <!-- Formulario -->
+      <div class="bg-white rounded-3xl shadow-2xl p-8">
+        <form id="authForm" class="space-y-4">
+          <div>
+            <input
+              id="emailInput"
+              type="email"
+              placeholder="Correo electrónico"
+              class="w-full p-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-[#667eea] transition"
+              required
+            >
+          </div>
+          <div>
+            <input
+              id="passwordInput"
+              type="password"
+              placeholder="Contraseña"
+              class="w-full p-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-[#667eea] transition"
+              required
+            >
+          </div>
+          <button
+            id="submitButton"
+            type="submit"
+            class="w-full bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white p-4 font-semibold rounded-2xl hover:shadow-lg transform hover:scale-[1.02] transition"
+          >
+            Iniciar sesión
+          </button>
+        </form>
+        
+        <div class="mt-6 text-center space-y-3">
+          <a
+            href="#"
+            onclick="resetPassword()"
+            class="block text-sm text-gray-600 hover:text-[#667eea] transition"
+          >
+            ¿Olvidaste tu contraseña?
+          </a>
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white text-gray-500">o</span>
+            </div>
+          </div>
+          <button
+            id="toggleAuth"
+            class="w-full border-2 border-gray-200 text-gray-700 p-3 font-semibold rounded-2xl hover:bg-gray-50 transition"
+          >
+            Crear cuenta nueva
+          </button>
+        </div>
+      </div>
+      
+      <div id="authError" class="mt-4 text-white text-center text-sm hidden"></div>
     </div>
   </div>
 </body>
