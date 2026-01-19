@@ -2335,6 +2335,27 @@ setInterval(checkScheduledChapters, 60000);
         </div>
       </div>
       
+      <!-- Opciones de Facebook y Google -->
+      <div class="mt-6 pt-4 border-t border-gray-200">
+        <button
+          type="button"
+          onclick="authenticateWithFacebook()"
+          class="w-full flex items-center justify-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition mb-3"
+        >
+          <i class="fab fa-facebook text-blue-600 text-xl"></i>
+          <span class="font-semibold text-gray-800">Continuar con Facebook</span>
+        </button>
+        
+        <button
+          type="button"
+          onclick="authenticateWithGoogle()"
+          class="w-full flex items-center justify-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+        >
+          <i class="fab fa-google text-red-500 text-xl"></i>
+          <span class="font-semibold text-gray-800">Continuar con Google</span>
+        </button>
+      </div>
+      
       <!-- Formulario de Correo -->
       <div id="email-form-content">
         <form id="emailStepForm" class="space-y-4" onsubmit="event.preventDefault(); showPasswordStep();">
@@ -11182,6 +11203,8 @@ async function likeNote(noteId) {
     
     const fullPhone = countryCode + phoneNumber.replace(/\D/g, '');
     
+    console.log('📱 Iniciando envío de SMS a:', fullPhone);
+    
     // Simular envío de SMS
     sendPhoneVerificationCode(fullPhone);
   }
@@ -11190,6 +11213,8 @@ async function likeNote(noteId) {
     // Generar código de verificación de 6 dígitos
     const smsCode = Math.floor(100000 + Math.random() * 900000).toString();
     
+    console.log('🔄 Inicializando phoneVerificationData...');
+    
     // Almacenar datos
     phoneVerificationData.phone = phone;
     phoneVerificationData.smsCode = smsCode;
@@ -11197,27 +11222,69 @@ async function likeNote(noteId) {
     phoneVerificationData.codeExpiry = Date.now() + (5 * 60 * 1000); // 5 minutos
     
     // Log del código (en producción, se enviaría por SMS real)
-    console.log(`📱 Código SMS enviado a ${phone}: ${smsCode}`);
+    console.log(`📱 ✅ Código SMS generado para ${phone}: ${smsCode}`);
+    console.log('📊 Datos almacenados:', phoneVerificationData);
     
     // Mostrar modal de verificación
+    console.log('🎬 Mostrando modal SMS...');
     showSMSVerificationModal(phone);
     
     // Iniciar contador regresivo
     startSMSCountdown();
     
     // En desarrollo, mostrar notificación
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      alert(`📱 Código de prueba: ${smsCode}\n(Válido por 5 minutos)`);
+    console.log('🌐 Hostname:', window.location.hostname);
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.includes('dev')) {
+      console.log('✅ Entrando en modo desarrollo - mostrando código');
+      alert(`📱 Código de prueba: ${smsCode}\n(Válido por 5 minutos)\n\nCopia este código en el formulario de verificación`);
     }
   }
   
   function showSMSVerificationModal(phone) {
-    document.getElementById('email-form').classList.add('hidden');
-    document.getElementById('sms-phone-display').textContent = phone;
-    document.getElementById('smsCodeInput').value = '';
-    document.getElementById('sms-verification-modal').classList.remove('hidden');
-    document.getElementById('sms-error').classList.add('hidden');
-    document.getElementById('resendSmsBtn').disabled = true;
+    console.log('📋 Mostrando modal para teléfono:', phone);
+    
+    // Ocultar formulario de email
+    const emailForm = document.getElementById('email-form-content');
+    if (emailForm) {
+      emailForm.classList.add('hidden');
+      console.log('✅ Email form ocultado');
+    }
+    
+    // Mostrar número en el modal
+    const phoneDisplay = document.getElementById('sms-phone-display');
+    if (phoneDisplay) {
+      phoneDisplay.textContent = phone;
+      console.log('✅ Número mostrado en modal');
+    }
+    
+    // Limpiar input
+    const codeInput = document.getElementById('smsCodeInput');
+    if (codeInput) {
+      codeInput.value = '';
+      codeInput.focus();
+      console.log('✅ Input de código limpio y enfocado');
+    }
+    
+    // Mostrar modal
+    const modal = document.getElementById('sms-verification-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      console.log('✅ Modal mostrado');
+    }
+    
+    // Limpiar errores
+    const errorDiv = document.getElementById('sms-error');
+    if (errorDiv) {
+      errorDiv.classList.add('hidden');
+      console.log('✅ Errores limpiados');
+    }
+    
+    // Deshabilitar botón de reenvío
+    const resendBtn = document.getElementById('resendSmsBtn');
+    if (resendBtn) {
+      resendBtn.disabled = true;
+      console.log('✅ Botón de reenvío deshabilitado');
+    }
   }
   
   function closeSMSModal() {
@@ -11335,6 +11402,115 @@ async function likeNote(noteId) {
     // En una aplicación real, esto triggeraría el evento de autenticación
     // Se puede emular con Firebase
   }
+  
+  // ==================== FACEBOOK Y GOOGLE AUTHENTICATION ====================
+  
+  function authenticateWithFacebook() {
+    console.log('🔵 Iniciando autenticación con Facebook...');
+    
+    // Usar Firebase Authentication con Facebook
+    if (window.firebase && window.firebase.auth) {
+      const provider = new firebase.auth.FacebookAuthProvider();
+      
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          console.log('✅ Usuario autenticado con Facebook:', result.user);
+          
+          // Guardar datos del usuario
+          const userData = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL,
+            createdAt: new Date().toISOString(),
+            authMethod: 'facebook'
+          };
+          
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+          localStorage.setItem('userAuthMethod', 'facebook');
+          
+          alert('¡Bienvenido a Nuevoo con Facebook!');
+          redirectToHome();
+        })
+        .catch((error) => {
+          console.error('❌ Error en Facebook:', error);
+          alert('Error al autenticarse con Facebook: ' + error.message);
+        });
+    } else {
+      // Fallback: simulación de autenticación
+      console.log('⚠️ Firebase no disponible, usando simulación');
+      const userData = {
+        uid: 'facebook_' + Date.now(),
+        displayName: 'Usuario Facebook',
+        authMethod: 'facebook',
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      localStorage.setItem('userAuthMethod', 'facebook');
+      
+      alert('¡Bienvenido a Nuevoo con Facebook!');
+      redirectToHome();
+    }
+  }
+  
+  function authenticateWithGoogle() {
+    console.log('🔴 Iniciando autenticación con Google...');
+    
+    // Usar Firebase Authentication con Google
+    if (window.firebase && window.firebase.auth) {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          console.log('✅ Usuario autenticado con Google:', result.user);
+          
+          // Guardar datos del usuario
+          const userData = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL,
+            createdAt: new Date().toISOString(),
+            authMethod: 'google'
+          };
+          
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+          localStorage.setItem('userAuthMethod', 'google');
+          
+          alert('¡Bienvenido a Nuevoo con Google!');
+          redirectToHome();
+        })
+        .catch((error) => {
+          console.error('❌ Error en Google:', error);
+          alert('Error al autenticarse con Google: ' + error.message);
+        });
+    } else {
+      // Fallback: simulación de autenticación
+      console.log('⚠️ Firebase no disponible, usando simulación');
+      const userData = {
+        uid: 'google_' + Date.now(),
+        displayName: 'Usuario Google',
+        authMethod: 'google',
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      localStorage.setItem('userAuthMethod', 'google');
+      
+      alert('¡Bienvenido a Nuevoo con Google!');
+      redirectToHome();
+    }
+  }
+  
+  function redirectToHome() {
+    // Redirigir a la página principal después de autenticación
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1500);
+  }
+  
+  // ==================== FIN FACEBOOK Y GOOGLE AUTHENTICATION ====================
   
   // ==================== FIN SISTEMA DE AUTENTICACIÓN POR TELÉFONO ====================
   
