@@ -7,6 +7,8 @@
   <title>Atenis - Historias y Relatos</title>
   
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4653147807800151" crossorigin="anonymous"></script>
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
   <!-- Tailwind CSS CDN -->
@@ -2413,6 +2415,42 @@ setInterval(checkScheduledChapters, 60000);
       <div id="resetTimer" class="mt-2 text-center text-xs text-gray-500 hidden"></div>
     </div>
   </div>
+
+  <!-- Modal de CAPTCHA para verificación de intentos duplicados -->
+  <div id="captcha-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Verificación de Seguridad</h2>
+        <p class="text-sm text-gray-600">Detectamos un intento de envío de correo de recuperación después de un reinicio. Por favor, verifica que eres un humano.</p>
+      </div>
+
+      <div id="captcha-container" class="mb-6">
+        <!-- reCAPTCHA se renderizará aquí -->
+        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" data-callback="onCaptchaSuccess"></div>
+        <p class="text-xs text-gray-500 mt-3 text-center">Esta demostración usa una clave de reCAPTCHA pública para pruebas</p>
+      </div>
+
+      <div id="captcha-status" class="mb-4"></div>
+
+      <button 
+        id="captcha-submit-btn"
+        type="button"
+        class="w-full bg-[#00A2FF] text-white p-3 font-semibold rounded-lg hover:bg-[#0066CC] transition disabled:opacity-50 disabled:cursor-not-allowed"
+        onclick="verifyCaptchaAndContinue()"
+        disabled
+      >
+        Continuar
+      </button>
+
+      <button
+        type="button"
+        class="w-full mt-2 text-gray-600 p-3 font-semibold rounded-lg hover:bg-gray-100 transition"
+        onclick="closeCaptchaModal()"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
 </body>
 
 <!-- APLICACIÓN PRINCIPAL ESTILO TIKTOK (MODO CLARO) -->
@@ -2467,6 +2505,46 @@ setInterval(checkScheduledChapters, 60000);
     .scrollbar-hide {
         -ms-overflow-style: none;
         scrollbar-width: none;
+    }
+    
+    /* Estilos para el Modal de CAPTCHA */
+    #captcha-modal {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    #captcha-modal.hidden {
+      animation: fadeOut 0.3s ease-in-out forwards;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+    
+    #captcha-modal .g-recaptcha {
+      display: flex;
+      justify-content: center;
+    }
+    
+    #math-problem {
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      padding: 1rem;
+      background: linear-gradient(135deg, rgba(0, 162, 255, 0.1), rgba(0, 162, 255, 0.05));
+      border-radius: 0.5rem;
     }
     </style>
     
@@ -10943,8 +11021,204 @@ async function likeNote(noteId) {
     document.getElementById('password-form').classList.remove('hidden');
   }
   
+  // Sistema de detección de reinicio y CAPTCHA
+  const RECOVERY_ATTEMPT_KEY = 'recovery_attempt_data';
+  const SESSION_ID_KEY = 'session_id';
+  
+  function initializeSessionId() {
+    // Crear ID de sesión único para cada carga de página
+    if (!sessionStorage.getItem(SESSION_ID_KEY)) {
+      sessionStorage.setItem(SESSION_ID_KEY, 'session_' + Date.now());
+    }
+    return sessionStorage.getItem(SESSION_ID_KEY);
+  }
+  
+  function detectDuplicateRecoveryAttempt(email) {
+    // Inicializar sesión
+    const currentSessionId = initializeSessionId();
+    
+    // Obtener datos del intento anterior
+    const attemptData = localStorage.getItem(RECOVERY_ATTEMPT_KEY);
+    
+    if (!attemptData) {
+      // Primer intento, guardar datos
+      storeRecoveryAttempt(email, currentSessionId);
+      return { isDuplicate: false };
+    }
+    
+    const parsedData = JSON.parse(attemptData);
+    const timeSinceLastAttempt = Date.now() - parsedData.timestamp;
+    const fifteenMinutes = 15 * 60 * 1000;
+    
+    // Verificar si es un intento duplicado
+    // Condiciones:
+    // 1. Mismo correo
+    // 2. Dentro de 15 minutos (período de espera)
+    // 3. Sesión diferente (indica reinicio del navegador)
+    const isSameEmail = parsedData.email === email;
+    const isWithinTimeWindow = timeSinceLastAttempt < fifteenMinutes;
+    const isDifferentSession = parsedData.sessionId !== currentSessionId;
+    
+    if (isSameEmail && isWithinTimeWindow && isDifferentSession) {
+      console.warn('⚠️ Intento duplicado detectado:', {
+        email,
+        timeSinceLastAttempt,
+        sessionChange: isDifferentSession
+      });
+      
+      return {
+        isDuplicate: true,
+        email,
+        timeSinceLastAttempt,
+        isDifferentSession,
+        previousAttemptTime: parsedData.timestamp
+      };
+    }
+    
+    // Si pasó mucho tiempo, permitir nuevo intento
+    if (!isWithinTimeWindow) {
+      storeRecoveryAttempt(email, currentSessionId);
+      return { isDuplicate: false };
+    }
+    
+    return { isDuplicate: false };
+  }
+  
+  function storeRecoveryAttempt(email, sessionId) {
+    const attemptData = {
+      email,
+      sessionId,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(RECOVERY_ATTEMPT_KEY, JSON.stringify(attemptData));
+  }
+  
+  function showCaptchaModal() {
+    const modal = document.getElementById('captcha-modal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    
+    // Renderizar reCAPTCHA si está disponible
+    if (window.grecaptcha && !window.captchaRendered) {
+      try {
+        grecaptcha.render('captcha-container', {
+          sitekey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+          callback: 'onCaptchaSuccess'
+        });
+        window.captchaRendered = true;
+      } catch (e) {
+        console.warn('Error al renderizar reCAPTCHA:', e);
+        // Si reCAPTCHA falla, mostrar CAPTCHA alternativo simple
+        showSimpleCaptcha();
+      }
+    }
+  }
+  
+  function showSimpleCaptcha() {
+    const container = document.getElementById('captcha-container');
+    container.innerHTML = `
+      <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <p class="text-sm font-semibold text-gray-700 mb-3">Resuelve este cálculo matemático:</p>
+        <div id="math-problem" class="text-2xl font-bold text-center mb-4 text-[#00A2FF]"></div>
+        <input 
+          id="math-answer"
+          type="number"
+          placeholder="Tu respuesta"
+          class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#00A2FF]"
+        >
+        <p class="text-xs text-gray-500 mt-2">Ingresa el resultado del cálculo anterior</p>
+      </div>
+    `;
+    
+    // Generar problema matemático
+    const num1 = Math.floor(Math.random() * 50) + 1;
+    const num2 = Math.floor(Math.random() * 50) + 1;
+    const operation = Math.floor(Math.random() * 2);
+    const answer = operation === 0 ? num1 + num2 : num1 * num2;
+    const operator = operation === 0 ? '+' : '×';
+    
+    document.getElementById('math-problem').textContent = `${num1} ${operator} ${num2} = ?`;
+    
+    // Almacenar respuesta correcta
+    window.captchaAnswer = answer;
+    
+    // Habilitar botón cuando hay respuesta
+    document.getElementById('math-answer').addEventListener('input', function() {
+      const btn = document.getElementById('captcha-submit-btn');
+      btn.disabled = this.value.trim() === '';
+    });
+  }
+  
+  function onCaptchaSuccess(token) {
+    // Callback de reCAPTCHA - habilitar botón
+    document.getElementById('captcha-submit-btn').disabled = false;
+    window.captchaToken = token;
+  }
+  
+  function verifyCaptchaAndContinue() {
+    const btn = document.getElementById('captcha-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+    
+    // Verificar CAPTCHA simple o reCAPTCHA
+    const mathAnswer = document.getElementById('math-answer');
+    
+    if (mathAnswer && mathAnswer.parentElement.parentElement.id === 'captcha-container') {
+      // CAPTCHA matemático simple
+      const userAnswer = parseInt(mathAnswer.value);
+      if (userAnswer !== window.captchaAnswer) {
+        document.getElementById('captcha-status').innerHTML = 
+          '<p class="text-red-500 text-sm">❌ Respuesta incorrecta. Intenta de nuevo.</p>';
+        btn.disabled = false;
+        btn.textContent = 'Continuar';
+        return;
+      }
+    }
+    
+    // Si llegamos aquí, CAPTCHA fue exitoso
+    closeCaptchaModal();
+    continuePasswordReset(window.pendingEmail);
+  }
+  
+  function closeCaptchaModal() {
+    const modal = document.getElementById('captcha-modal');
+    modal.classList.add('hidden');
+    document.getElementById('captcha-status').innerHTML = '';
+    
+    // Limpiar CAPTCHA
+    const mathAnswer = document.getElementById('math-answer');
+    if (mathAnswer) {
+      mathAnswer.value = '';
+    }
+    
+    // Reset botón
+    const btn = document.getElementById('captcha-submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Continuar';
+  }
+  
   let lastResetTime = 0;
   function sendPasswordReset() {
+    const email = document.getElementById('resetEmailInput').value;
+    
+    // Validar email
+    if (!email || !email.includes('@')) {
+      document.getElementById('resetMessage').textContent = 'Por favor, ingresa un correo válido';
+      document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-red-500';
+      document.getElementById('resetMessage').classList.remove('hidden');
+      return;
+    }
+    
+    // Detectar intento duplicado
+    const duplicationCheck = detectDuplicateRecoveryAttempt(email);
+    
+    if (duplicationCheck.isDuplicate && duplicationCheck.isDifferentSession) {
+      console.log('🔒 Mostrando CAPTCHA para verificación de seguridad');
+      window.pendingEmail = email;
+      showCaptchaModal();
+      return;
+    }
+    
     const now = Date.now();
     const timeSinceLastReset = now - lastResetTime;
     const fifteenMinutes = 15 * 60 * 1000;
@@ -10957,7 +11231,11 @@ async function likeNote(noteId) {
       return;
     }
     
-    const email = document.getElementById('resetEmailInput').value;
+    continuePasswordReset(email);
+  }
+  
+  function continuePasswordReset(email) {
+    const now = Date.now();
     const resetButton = document.getElementById('resetButton');
     resetButton.disabled = true;
     resetButton.textContent = 'Enviando...';
@@ -10965,6 +11243,8 @@ async function likeNote(noteId) {
     firebase.auth().sendPasswordResetEmail(email)
       .then(() => {
         lastResetTime = now;
+        storeRecoveryAttempt(email, sessionStorage.getItem(SESSION_ID_KEY));
+        
         document.getElementById('resetMessage').textContent = 'Correo enviado. Revisa tu bandeja de entrada.';
         document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-green-600';
         document.getElementById('resetMessage').classList.remove('hidden');
