@@ -2351,12 +2351,6 @@ setInterval(checkScheduledChapters, 60000);
             class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
             required
           >
-          
-          <!-- reCAPTCHA -->
-          <div class="flex justify-center">
-            <div class="g-recaptcha" data-sitekey="6LcE02EsAAAAAJU8Y2vWQqvGLtBxWz4yhya3LU95"></div>
-          </div>
-          
           <button
             type="submit"
             class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
@@ -2401,6 +2395,12 @@ setInterval(checkScheduledChapters, 60000);
           class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
           required
         >
+        
+        <!-- reCAPTCHA -->
+        <div class="flex justify-center">
+          <div id="password-recaptcha" class="g-recaptcha" data-sitekey="6LcE02EsAAAAAJU8Y2vWQqvGLtBxWz4yhya3LU95"></div>
+        </div>
+        
         <button
           id="submitButton"
           type="submit"
@@ -11157,22 +11157,10 @@ async function likeNote(noteId) {
   }
   
   function showPasswordStep() {
-    // Validar reCAPTCHA
-    const captchaResponse = grecaptcha.getResponse();
-    if (!captchaResponse) {
-      const errorDiv = document.getElementById('authError');
-      errorDiv.textContent = 'Por favor completa el captcha';
-      errorDiv.classList.remove('hidden');
-      return;
-    }
-    
     const email = document.getElementById('emailInput').value;
     document.getElementById('user-email-display').textContent = email;
     document.getElementById('email-form').classList.add('hidden');
     document.getElementById('password-form').classList.remove('hidden');
-    
-    // Reset captcha
-    grecaptcha.reset();
   }
   
   function backToEmail() {
@@ -11796,6 +11784,15 @@ async function likeNote(noteId) {
   }
   
   function loginUser() {
+    // Validar reCAPTCHA
+    const captchaResponse = grecaptcha.getResponse(1); // ID del widget de password
+    if (!captchaResponse) {
+      const authError = document.querySelector('#password-form #authError');
+      authError.textContent = 'Por favor completa el captcha';
+      authError.classList.remove('hidden');
+      return;
+    }
+    
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
     const submitButton = document.getElementById('submitButton');
@@ -11808,12 +11805,14 @@ async function likeNote(noteId) {
     firebase.auth().signInWithEmailAndPassword(email, password)
       .then(() => {
         // Login exitoso
+        grecaptcha.reset(1);
       })
       .catch(error => {
         authError.textContent = 'Correo o contraseña incorrectos';
         authError.classList.remove('hidden');
         submitButton.disabled = false;
         submitButton.textContent = 'Iniciar sesión';
+        grecaptcha.reset(1);
       });
   }
   
