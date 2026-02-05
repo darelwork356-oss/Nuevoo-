@@ -7,7 +7,7 @@
   <title>Atenis - Historias y Relatos</title>
   
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4653147807800151" crossorigin="anonymous"></script>
-  <!-- reCAPTCHA v3 -->
+  <!-- reCAPTCHA v2 -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
@@ -2322,6 +2322,12 @@ setInterval(checkScheduledChapters, 60000);
               required
             >
           </div>
+          
+          <!-- reCAPTCHA -->
+          <div class="flex justify-center">
+            <div class="g-recaptcha" data-sitekey="6LcE02EsAAAAAJU8Y2vWQqvGLtBxWz4yhya3LU95"></div>
+          </div>
+          
           <button
             type="submit"
             class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
@@ -2345,6 +2351,12 @@ setInterval(checkScheduledChapters, 60000);
             class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-900 transition"
             required
           >
+          
+          <!-- reCAPTCHA -->
+          <div class="flex justify-center">
+            <div class="g-recaptcha" data-sitekey="6LcE02EsAAAAAJU8Y2vWQqvGLtBxWz4yhya3LU95"></div>
+          </div>
+          
           <button
             type="submit"
             class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
@@ -2681,6 +2693,18 @@ setInterval(checkScheduledChapters, 60000);
     #smsCodeInput:focus {
       border-color: #00A2FF !important;
       box-shadow: 0 0 0 3px rgba(0, 162, 255, 0.1) !important;
+    }
+    
+    /* Estilos para reCAPTCHA responsive */
+    .g-recaptcha {
+      transform: scale(0.95);
+      transform-origin: 0 0;
+    }
+    
+    @media (max-width: 380px) {
+      .g-recaptcha {
+        transform: scale(0.85);
+      }
     }
     </style>
     
@@ -11133,10 +11157,22 @@ async function likeNote(noteId) {
   }
   
   function showPasswordStep() {
+    // Validar reCAPTCHA
+    const captchaResponse = grecaptcha.getResponse();
+    if (!captchaResponse) {
+      const errorDiv = document.getElementById('authError');
+      errorDiv.textContent = 'Por favor completa el captcha';
+      errorDiv.classList.remove('hidden');
+      return;
+    }
+    
     const email = document.getElementById('emailInput').value;
     document.getElementById('user-email-display').textContent = email;
     document.getElementById('email-form').classList.add('hidden');
     document.getElementById('password-form').classList.remove('hidden');
+    
+    // Reset captcha
+    grecaptcha.reset();
   }
   
   function backToEmail() {
@@ -11171,6 +11207,13 @@ async function likeNote(noteId) {
   let smsCountdownTimer = null;
   
   function handlePhoneLogin() {
+    // Validar reCAPTCHA
+    const captchaResponse = grecaptcha.getResponse();
+    if (!captchaResponse) {
+      showPhoneError('Por favor completa el captcha');
+      return;
+    }
+    
     const countryCode = document.getElementById('countryCode').value;
     const phoneNumber = document.getElementById('phoneInput').value.trim();
     
@@ -11186,6 +11229,9 @@ async function likeNote(noteId) {
     
     // Simular envío de SMS
     sendPhoneVerificationCode(fullPhone);
+    
+    // Reset captcha
+    grecaptcha.reset();
   }
   
   function sendPhoneVerificationCode(phone) {
