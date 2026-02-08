@@ -148,6 +148,9 @@
     .skiptranslate {
       display: none !important;
     }
+    .hidden {
+      display: none !important;
+    }
   </style>
   <!-- MediaPipe para detección facial real -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -2219,8 +2222,13 @@ setInterval(checkScheduledChapters, 60000);
   
   <!-- Google Translate (oculto) -->
   <div id="google_translate_element" style="display:none !important; visibility:hidden !important; position:absolute; left:-9999px;"></div>
+  <noscript>
+    <div class="w-full bg-yellow-100 text-yellow-800 text-center py-2 text-sm">
+      Para continuar, habilita JavaScript en tu navegador.
+    </div>
+  </noscript>
   
-  <div id="auth-form" class="w-full h-screen flex flex-col bg-white" style="display: none;">
+  <div id="auth-form" class="w-full h-screen flex flex-col bg-white">
     <!-- Header con nombre de la app -->
     <div class="pt-12 pb-8 text-center">
       <h1 class="text-3xl font-bold text-gray-900">Atenis</h1>
@@ -2552,7 +2560,7 @@ setInterval(checkScheduledChapters, 60000);
 </body>
 
 <!-- APLICACIÓN PRINCIPAL ESTILO TIKTOK (MODO CLARO) -->
-<div id="main-app" class="h-screen flex flex-col font-sans text-black" style="display: none; background: #F2F4F5;">
+<div id="main-app" class="h-screen flex flex-col font-sans text-black hidden" style="background: #F2F4F5;">
   <!-- TOP BAR ESTILO ROBLOX -->
   <div id="top-navbar" class="flex items-center justify-between px-4 py-3 sticky top-0 z-50" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0, 162, 255, 0.2);">
     <h1 id="app-name" class="text-2xl font-bold" style="color: #00A2FF;">Atenis</h1>
@@ -4328,7 +4336,7 @@ function openSearch() {
   console.log('🔍 Abriendo sección de búsqueda');
   
   // Ocultar todas las vistas
-  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('main-app').classList.add('hidden');
   document.getElementById('search-view').classList.remove('hidden');
   
   // Enfocar el campo de búsqueda
@@ -4341,12 +4349,12 @@ function openSearch() {
 function openHome() {
   console.log('🏠 Abriendo inicio');
   document.getElementById('search-view').classList.add('hidden');
-  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('main-app').classList.remove('hidden');
 }
 
 function openCreatorHub() {
   console.log('✨ Abriendo Creator Hub');
-  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('main-app').classList.add('hidden');
   document.getElementById('creator-hub-view').classList.remove('hidden');
   
   // Ocultar barra de navegación
@@ -4357,7 +4365,7 @@ function openCreatorHub() {
 function closeCreatorHub() {
   console.log('❌ Cerrando Creator Hub');
   document.getElementById('creator-hub-view').classList.add('hidden');
-  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('main-app').classList.remove('hidden');
   
   // Mostrar barra de navegación
   const bottomNav = document.getElementById('bottom-nav');
@@ -11147,13 +11155,13 @@ async function likeNote(noteId) {
 
   /*********************** AUTENTICACIÓN **************************/
   function showEmailForm() {
-    document.getElementById('auth-form').style.display = 'none';
+    document.getElementById('auth-form').classList.add('hidden');
     document.getElementById('email-form').classList.remove('hidden');
   }
   
   function hideEmailForm() {
     document.getElementById('email-form').classList.add('hidden');
-    document.getElementById('auth-form').style.display = 'flex';
+    document.getElementById('auth-form').classList.remove('hidden');
   }
   
   function showPasswordStep() {
@@ -11947,8 +11955,8 @@ async function likeNote(noteId) {
           firebase.auth().signOut();
           return;
         }
-        authFormContainer.style.display = 'none';
-        mainAppContainer.style.display = 'flex';
+        authFormContainer.classList.add('hidden');
+        mainAppContainer.classList.remove('hidden');
         loadStories();
         loadUserStories(user.uid);
         initializeFeedSections();
@@ -11990,8 +11998,8 @@ async function likeNote(noteId) {
         }
       });
     } else {
-      authFormContainer.style.display = 'flex';
-      mainAppContainer.style.display = 'none';
+      authFormContainer.classList.remove('hidden');
+      mainAppContainer.classList.add('hidden');
     }
   });
   /*********************** AUTENTICACIÓN CON GOOGLE Y FACEBOOK **************************/
