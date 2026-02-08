@@ -160,6 +160,30 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWBr3sud1_lDPmtLJI42pCBZnco5_vyCc",
+      authDomain: "noble-amp-458106-g0.firebaseapp.com",
+      databaseURL: "https://noble-amp-458106-g0-default-rtdb.firebaseio.com",
+      projectId: "noble-amp-458106-g0",
+      storageBucket: "noble-amp-458106-g0.firebasestorage.app",
+      messagingSenderId: "744574411059",
+      appId: "1:744574411059:web:72a70955f1400df6645e46",
+      measurementId: "G-XEQ1J354HM"
+    };
+
+    function isFirebaseReady() {
+      return Boolean(window.firebase && window.firebase.apps && window.firebase.apps.length);
+    }
+
+    if (window.firebase && window.firebase.initializeApp) {
+      if (!isFirebaseReady()) {
+        window.firebase.initializeApp(firebaseConfig);
+      }
+    } else {
+      console.warn('Firebase SDK no cargado. Las funciones de autenticación quedarán inactivas.');
+    }
+  </script>
   <style>
     /* ESTILOS BASE CHATGPT STYLE */
 body {
@@ -989,6 +1013,10 @@ body {
 <script>
 // Funciones para capítulos programados
 function saveScheduledChapter(chapterId, publishDate) {
+  if (!isFirebaseReady()) {
+    console.warn('Firebase no disponible. No se puede programar capítulo.');
+    return;
+  }
   firebase.database().ref('scheduledChapters/' + chapterId).set({
     publishDate: publishDate,
     status: 'pending'
@@ -996,6 +1024,9 @@ function saveScheduledChapter(chapterId, publishDate) {
 }
 
 function checkScheduledChapters() {
+  if (!isFirebaseReady()) {
+    return;
+  }
   const now = new Date().getTime();
   firebase.database().ref('scheduledChapters').once('value', snapshot => {
     snapshot.forEach(child => {
@@ -2343,7 +2374,7 @@ setInterval(checkScheduledChapters, 60000);
       
       <!-- Formulario de Correo -->
       <div id="email-form-content">
-        <form id="emailStepForm" class="space-y-4" onsubmit="event.preventDefault(); showPasswordStep();">
+        <form id="emailStepForm" class="space-y-4">
           <input
             id="emailInput"
             type="email"
@@ -2352,7 +2383,8 @@ setInterval(checkScheduledChapters, 60000);
             required
           >
           <button
-            type="submit"
+            type="button"
+            onclick="showPasswordStep()"
             class="w-full bg-[#00A2FF] text-white p-4 font-semibold rounded-lg hover:bg-[#0066CC] transition"
           >
             Continuar
@@ -2718,6 +2750,10 @@ setInterval(checkScheduledChapters, 60000);
 
 <script>
 function loadFollowingStories() {
+  if (!isFirebaseReady()) {
+    console.warn('Firebase no disponible. Se omite la carga de historias seguidas.');
+    return;
+  }
   const user = firebase.auth().currentUser;
   if (!user) return;
 
@@ -2786,19 +2822,33 @@ function openLatestStory(authorId, storyId) {
 
 // Llamar loadFollowingStories al cargar la página y cuando cambie el estado del usuario
 document.addEventListener('DOMContentLoaded', loadFollowingStories);
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    loadFollowingStories();
-    // Actualizar foto de perfil en barra inferior
-    firebase.database().ref('users/' + user.uid).once('value').then(snapshot => {
-      const userData = snapshot.val();
-      if (userData && userData.profileImage) {
-        const bottomNavPic = document.getElementById('bottom-nav-profile-pic');
-        if (bottomNavPic) bottomNavPic.src = userData.profileImage;
-      }
+if (isFirebaseReady()) {
+  if (isFirebaseReady()) {
+    firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      loadFollowingStories();
+      // Actualizar foto de perfil en barra inferior
+      firebase.database().ref('users/' + user.uid).once('value').then(snapshot => {
+        const userData = snapshot.val();
+        if (userData && userData.profileImage) {
+          const bottomNavPic = document.getElementById('bottom-nav-profile-pic');
+          if (bottomNavPic) bottomNavPic.src = userData.profileImage;
+        }
+      });
+    }
     });
+  } else {
+    const authFormContainer = document.getElementById('auth-form');
+    const mainAppContainer = document.getElementById('main-app');
+    if (authFormContainer) authFormContainer.style.display = 'flex';
+    if (mainAppContainer) mainAppContainer.style.display = 'none';
   }
-});
+} else {
+  document.addEventListener('DOMContentLoaded', () => {
+    const authFallback = document.getElementById('auth-form');
+    if (authFallback) authFallback.style.display = 'flex';
+  });
+}
 </script>
 
 <style>
@@ -10714,17 +10764,6 @@ async function likeNote(noteId) {
   }
 
   /*********************** CONFIGURACIÓN DE FIREBASE **************************/
-  const firebaseConfig = {
-    apiKey: "AIzaSyBWBr3sud1_lDPmtLJI42pCBZnco5_vyCc",
-    authDomain: "noble-amp-458106-g0.firebaseapp.com",
-    databaseURL: "https://noble-amp-458106-g0-default-rtdb.firebaseio.com",
-    projectId: "noble-amp-458106-g0",
-    storageBucket: "noble-amp-458106-g0.firebasestorage.app",
-    messagingSenderId: "744574411059",
-    appId: "1:744574411059:web:72a70955f1400df6645e46",
-    measurementId: "G-XEQ1J354HM"
-  };
-  firebase.initializeApp(firebaseConfig);
   // Todos los usuarios están autorizados para transmitir en vivo
   const authorizedEmails = [];
   /*********************** FUNCIONES ADICIONALES **************************/
@@ -10861,6 +10900,10 @@ async function likeNote(noteId) {
     const email = emailInput.value;
     if (!email) {
       alert("Please enter your email address to reset your password.");
+      return;
+    }
+    if (!isFirebaseReady()) {
+      alert("El servicio de autenticación no está disponible ahora.");
       return;
     }
     firebase.auth().sendPasswordResetEmail(email)
@@ -11157,7 +11200,14 @@ async function likeNote(noteId) {
   }
   
   function showPasswordStep() {
-    const email = document.getElementById('emailInput').value;
+    const email = document.getElementById('emailInput').value.trim();
+    const authError = document.getElementById('authError');
+    if (!email || !email.includes('@')) {
+      authError.textContent = 'Ingresa un correo válido';
+      authError.classList.remove('hidden');
+      return;
+    }
+    authError.classList.add('hidden');
     document.getElementById('user-email-display').textContent = email;
     document.getElementById('email-form').classList.add('hidden');
     document.getElementById('password-form').classList.remove('hidden');
@@ -11195,6 +11245,10 @@ async function likeNote(noteId) {
   let smsCountdownTimer = null;
   
   function handlePhoneLogin() {
+    if (!window.grecaptcha) {
+      showPhoneError('reCAPTCHA no está disponible en este momento');
+      return;
+    }
     // Validar reCAPTCHA
     const captchaResponse = grecaptcha.getResponse();
     if (!captchaResponse) {
@@ -11737,10 +11791,23 @@ async function likeNote(noteId) {
       return;
     }
     
+    if (!isFirebaseReady()) {
+      document.getElementById('resetMessage').textContent = 'El servicio de autenticación no está disponible ahora.';
+      document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-red-500';
+      document.getElementById('resetMessage').classList.remove('hidden');
+      return;
+    }
+
     continuePasswordReset(email);
   }
   
   function continuePasswordReset(email) {
+    if (!isFirebaseReady()) {
+      document.getElementById('resetMessage').textContent = 'El servicio de autenticación no está disponible ahora.';
+      document.getElementById('resetMessage').className = 'mt-4 text-center text-sm text-red-500';
+      document.getElementById('resetMessage').classList.remove('hidden');
+      return;
+    }
     const now = Date.now();
     const resetButton = document.getElementById('resetButton');
     resetButton.disabled = true;
@@ -11784,6 +11851,12 @@ async function likeNote(noteId) {
   }
   
   function loginUser() {
+    if (!window.grecaptcha) {
+      const authError = document.querySelector('#password-form #authError');
+      authError.textContent = 'reCAPTCHA no está disponible en este momento';
+      authError.classList.remove('hidden');
+      return;
+    }
     // Validar reCAPTCHA
     const captchaResponse = grecaptcha.getResponse(1); // ID del widget de password
     if (!captchaResponse) {
@@ -11802,6 +11875,14 @@ async function likeNote(noteId) {
     submitButton.textContent = 'Iniciando...';
     authError.classList.add('hidden');
     
+    if (!isFirebaseReady()) {
+      authError.textContent = 'El servicio de autenticación no está disponible ahora.';
+      authError.classList.remove('hidden');
+      submitButton.disabled = false;
+      submitButton.textContent = 'Iniciar sesión';
+      return;
+    }
+
     firebase.auth().signInWithEmailAndPassword(email, password)
       .then(() => {
         // Login exitoso
@@ -11847,6 +11928,11 @@ async function likeNote(noteId) {
     authError.classList.add('hidden');
     const email = emailInput.value;
     const password = passwordInput.value;
+    if (!isFirebaseReady()) {
+      authError.textContent = 'El servicio de autenticación no está disponible ahora.';
+      authError.classList.remove('hidden');
+      return;
+    }
     if (isLogin) {
       firebase.auth().signInWithEmailAndPassword(email, password)
         .then(userCredential => {
@@ -11886,7 +11972,8 @@ async function likeNote(noteId) {
         });
     }
   });
-  firebase.auth().onAuthStateChanged(user => {
+  if (isFirebaseReady()) {
+    firebase.auth().onAuthStateChanged(user => {
     // Aplicar traducción automática al cargar - MEJORADO
     const applyUserLanguage = () => {
       const preferredLang = localStorage.getItem('preferredLanguage') || 
@@ -11993,7 +12080,13 @@ async function likeNote(noteId) {
       authFormContainer.style.display = 'flex';
       mainAppContainer.style.display = 'none';
     }
-  });
+    });
+  } else {
+    const authFormContainer = document.getElementById('auth-form');
+    const mainAppContainer = document.getElementById('main-app');
+    if (authFormContainer) authFormContainer.style.display = 'flex';
+    if (mainAppContainer) mainAppContainer.style.display = 'none';
+  }
   /*********************** AUTENTICACIÓN CON GOOGLE Y FACEBOOK **************************/
   function signInWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();

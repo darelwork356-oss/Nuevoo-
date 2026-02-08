@@ -321,27 +321,30 @@ class PremiumIntroAnimation {
 
 // Reemplazar la animación original con la versión premium
 document.addEventListener('DOMContentLoaded', () => {
-  if (!sessionStorage.getItem('introShown')) {
-    new PremiumIntroAnimation();
-  } else {
-    // Si ya se mostró, mostrar contenido directamente
-    document.body.style.overflow = 'auto';
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-      firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-          const mainApp = document.getElementById('main-app');
-          if (mainApp) {
-            mainApp.style.display = 'flex';
-            mainApp.style.opacity = '1';
-          }
-        } else {
-          const authForm = document.getElementById('auth-form');
-          if (authForm) {
-            authForm.style.display = 'flex';
-            authForm.style.opacity = '1';
-          }
+  // Desactivar intro premium y mostrar contenido directamente
+  document.body.style.overflow = 'auto';
+  sessionStorage.setItem('introShown', 'true');
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        const mainApp = document.getElementById('main-app');
+        if (mainApp) {
+          mainApp.style.display = 'flex';
+          mainApp.style.opacity = '1';
         }
-      });
+      } else {
+        const authForm = document.getElementById('auth-form');
+        if (authForm) {
+          authForm.style.display = 'flex';
+          authForm.style.opacity = '1';
+        }
+      }
+    });
+  } else {
+    const authForm = document.getElementById('auth-form');
+    if (authForm) {
+      authForm.style.display = 'flex';
+      authForm.style.opacity = '1';
     }
   }
 });
