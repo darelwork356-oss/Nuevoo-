@@ -2382,7 +2382,7 @@ setInterval(checkScheduledChapters, 60000);
       
       <!-- Formulario de Correo -->
       <div id="email-form-content">
-        <form id="emailStepForm" class="space-y-4" onsubmit="event.preventDefault(); showPasswordStep();">
+        <form id="emailStepForm" class="space-y-4">
           <input
             id="emailInput"
             type="email"
@@ -10792,6 +10792,7 @@ async function likeNote(noteId) {
   }
   /*********************** VARIABLES Y ELEMENTOS DEL DOM **************************/
   const authForm = document.getElementById('authForm');
+  const emailStepForm = document.getElementById('emailStepForm');
   const emailInput = document.getElementById('emailInput');
   const passwordInput = document.getElementById('passwordInput');
   const submitButton = document.getElementById('submitButton');
@@ -11207,7 +11208,14 @@ async function likeNote(noteId) {
   }
   
   function showPasswordStep() {
-    const email = document.getElementById('emailInput').value;
+    const email = document.getElementById('emailInput').value.trim();
+    const authError = document.getElementById('authError');
+    if (!email || !email.includes('@')) {
+      authError.textContent = 'Ingresa un correo válido';
+      authError.classList.remove('hidden');
+      return;
+    }
+    authError.classList.add('hidden');
     document.getElementById('user-email-display').textContent = email;
     document.getElementById('email-form').classList.add('hidden');
     document.getElementById('password-form').classList.remove('hidden');
@@ -11923,6 +11931,12 @@ async function likeNote(noteId) {
     authTitle.textContent = isLogin ? 'Iniciar sesión' : 'Crear cuenta';
     toggleAuth.textContent = isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión';
   });
+  if (emailStepForm) {
+    emailStepForm.addEventListener('submit', e => {
+      e.preventDefault();
+      showPasswordStep();
+    });
+  }
   authForm.addEventListener('submit', e => {
     e.preventDefault();
     authError.classList.add('hidden');
