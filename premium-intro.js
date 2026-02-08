@@ -342,6 +342,9 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
+    } else {
+      const fallbackIntro = Object.create(PremiumIntroAnimation.prototype);
+      fallbackIntro.showAuth();
     }
   }
 });
